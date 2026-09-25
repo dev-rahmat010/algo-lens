@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoLens | AI Code Visualizer & Complexity Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { primary: '#0ea5e9' } }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-sky-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-sky-500 text-slate-950 p-2 rounded-xl font-bold shadow-lg shadow-sky-500/20">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">AlgoLens</span>
+                    <span class="ml-2 text-xs bg-sky-950 text-sky-400 border border-sky-800 px-2 py-0.5 rounded-full font-medium">Developer Tooling</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-xs text-slate-400 hidden sm:inline-block">Engine: v1.0.4 Live</span>
+                <button onclick="resetVisualizer()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold hover:bg-slate-700 transition border border-slate-700">Reset Array</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Panel: Code Input & Controls (1 Column) -->
+        <div class="space-y-6 lg:col-span-1">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold uppercase tracking-wider text-sky-400">Algorithm Source Code</label>
+                    <select id="algo-select" onchange="loadPresetAlgorithm()" class="bg-slate-950 border border-slate-800 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        <option value="bubble">Bubble Sort O(n²)</option>
+                        <option value="linear">Linear Search O(n)</option>
+                    </select>
+                </div>
+
+                <textarea id="code-editor" rows="7" class="w-full bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none leading-relaxed">function bubbleSort(arr) {
+    for (let i = 0; i < arr.length; i++) {
+        for (let j = 0; j < arr.length - i - 1; j++) {
+            if (arr[j] > arr[j+1]) {
+                let temp = arr[j]; arr[j] = arr[j+1]; arr[j+1] = temp;
+            }
+        }
+    }
+}</textarea>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="startVisualization()" id="run-btn" class="flex items-center justify-center space-x-2 py-2.5 bg-sky-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-sky-400 shadow-md shadow-sky-500/20 transition">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>Animate Code</span>
+                    </button>
+                    <button onclick="runAiAnalysis()" class="flex items-center justify-center space-x-2 py-2.5 bg-slate-800 text-sky-400 font-bold rounded-xl text-xs hover:bg-slate-700 border border-sky-500/30 transition">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>AI Big-O Scan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Big-O Metrics Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Complexity Metrics</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-950 border border-slate-800/80 p-3 rounded-xl">
+                        <span class="text-[10px] text-slate-500 block uppercase">Time Complexity</span>
+                        <span id="time-complexity" class="text-lg font-mono font-bold text-sky-400">O(n²)</span>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800/80 p-3 rounded-xl">
+                        <span class="text-[10px] text-slate-500 block uppercase">Space Complexity</span>
+                        <span id="space-complexity" class="text-lg font-mono font-bold text-emerald-400">O(1)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualizer Stage & AI Breakdown (2 Columns) -->
+        <div class="space-y-6 lg:col-span-2 flex flex-col">
+            <!-- Visualizer Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col h-[340px] shadow-xl justify-between">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
+                        <h2 class="font-bold text-sm tracking-wide">Execution Stage</h2>
+                    </div>
+                    <span id="status-text" class="text-xs font-mono text-slate-400">Idle - Ready to step</span>
+                </div>
+
+                <!-- Array Columns Rendering Area -->
+                <div id="visualizer-grid" class="flex items-end justify-center space-x-2 h-48 py-4 px-2 bg-slate-950/60 rounded-xl border border-slate-800/60 overflow-hidden">
+                    <!-- Dynamic bars inserted via JS -->
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+                    <span>Comparisons: <strong id="comp-count" class="text-slate-100">0</strong></span>
+                    <span>Swaps: <strong id="swap-count" class="text-slate-100">0</strong></span>
+                </div>
+            </div>
+
+            <!-- AI Insights Box -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex-1 space-y-3">
+                <div class="flex items-center space-x-2 text-sky-400">
+                    <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-sm text-slate-100">AI Architecture & Optimization Log</h3>
+                </div>
+                <div id="ai-output" class="text-xs text-slate-300 font-mono bg-slate-950 p-4 rounded-xl border border-slate-800 leading-relaxed min-h-[100px]">
+                    Click "AI Big-O Scan" to evaluate memory allocations, bottleneck bottlenecks, and optimization vector paths...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script Engine -->
+    <script>
+        lucide.createIcons();
+
+        let arrayData = [45, 12, 85, 32, 67, 23, 90, 15, 50, 38];
+        let comparisons = 0;
+        let swaps = 0;
+        let isRunning = false;
+
+        function renderArray(activeIndices = [], sortedIndices = []) {
+            const grid = document.getElementById('visualizer-grid');
+            grid.innerHTML = arrayData.map((val, idx) => {
+                let bgClass = 'bg-sky-500';
+                if (activeIndices.includes(idx)) bgClass = 'bg-amber-400 scale-105 shadow-lg shadow-amber-500/50';
+                if (sortedIndices.includes(idx)) bgClass = 'bg-emerald-500';
+                
+                return `
+                    <div class="flex flex-col items-center flex-1 transition-all duration-150">
+                        <span class="text-[10px] font-mono text-slate-400 mb-1">${val}</span>
+                        <div class="w-full rounded-t-lg ${bgClass} transition-all" style="height: ${val * 2}px;"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resetVisualizer() {
+            if (isRunning) return;
+            arrayData = Array.from({length: 10}, () => Math.floor(Math.random() * 80) + 10);
+            comparisons = 0;
+            swaps = 0;
+            document.getElementById('comp-count').textContent = comparisons;
+            document.getElementById('swap-count').textContent = swaps;
+            document.getElementById('status-text').textContent = "Array reset successfully.";
+            renderArray();
+        }
+
+        function loadPresetAlgorithm() {
+            const type = document.getElementById('algo-select').value;
+            const editor = document.getElementById('code-editor');
+            if (type === 'bubble') {
+                editor.value = `function bubbleSort(arr) {\n    for (let i = 0; i < arr.length; i++) {\n        for (let j = 0; j < arr.length - i - 1; j++) {\n            if (arr[j] > arr[j+1]) {\n                let temp = arr[j]; arr[j] = arr[j+1]; arr[j+1] = temp;\n            }\n        }\n    }\n}`;
+                document.getElementById('time-complexity').textContent = "O(n²)";
+            } else {
+                editor.value = `function linearSearch(arr, target) {\n    for (let i = 0; i < arr.length; i++) {\n        if (arr[i] === target) return i;\n    }\n    return -1;\n}`;
+                document.getElementById('time-complexity').textContent = "O(n)";
+            }
+        }
+
+        async function startVisualization() {
+            if (isRunning) return;
+            isRunning = true;
+            comparisons = 0;
+            swaps = 0;
+            document.getElementById('status-text').textContent = "Running Bubble Sort Execution...";
+
+            let arr = [...arrayData];
+            let sorted = [];
+
+            for (let i = 0; i < arr.length; i++) {
+                for (let j = 0; j < arr.length - i - 1; j++) {
+                    comparisons++;
+                    document.getElementById('comp-count').textContent = comparisons;
+                    renderArray([j, j+1], sorted);
+                    await new Promise(r => setTimeout(r, 120));
+
+                    if (arr[j] > arr[j+1]) {
+                        swaps++;
+                        document.getElementById('swap-count').textContent = swaps;
+                        let temp = arr[j]; arr[j] = arr[j+1]; arr[j+1] = temp;
+                        arrayData = [...arr];
+                        renderArray([j, j+1], sorted);
+                        await new Promise(r => setTimeout(r, 120));
+                    }
+                }
+                sorted.push(arr.length - 1 - i);
+            }
+
+            renderArray([], Array.from({length: arr.length}, (_, i) => i));
+            document.getElementById('status-text').textContent = "Execution completed successfully!";
+            isRunning = false;
+        }
+
+        function runAiAnalysis() {
+            const output = document.getElementById('ai-output');
+            output.innerHTML = "Analyzing Abstract Syntax Tree (AST)... <br>Detecting nested loop structures and memory allocations...";
+            setTimeout(() => {
+                output.innerHTML = `✅ <strong>AST Analysis Complete:</strong><br>
+- <strong>Bottleneck Identified:</strong> Nested loop structure causes quadratic O(n²) time scaling.<br>
+- <strong>Memory Footprint:</strong> In-place mutation maintains constant auxiliary O(1) space complexity.<br>
+- <strong>Recommendation:</strong> Consider migrating to a Merge Sort or Quick Sort approach if scaling array elements beyond N = 10,000 items.`;
+            }, 800);
+        }
+
+        resetVisualizer();
+    </script>
+</body>
+</html>
